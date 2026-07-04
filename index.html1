@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>حجز موعد - د. محمد جلال الشيخ</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: #fafaf9;
+    color: #292524;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+  .wrap { max-width: 420px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 22px; }
+  .header h1 { color: #0f4c44; font-size: 24px; margin: 0; font-weight: 900; }
+  .header p { color: #78716c; font-size: 14px; margin: 4px 0 0; }
+  .pulse { width: 100%; height: 20px; margin-top: 8px; opacity: 0.7; }
+
+  .steps { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 0 6px; }
+  .step-item { flex: 1; text-align: center; position: relative; }
+  .step-circle {
+    width: 30px; height: 30px; border-radius: 50%; margin: 0 auto 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; background: #e7e5e4; color: #a8a29e;
+  }
+  .step-circle.active { background: #ccfbf1; color: #0f4c44; box-shadow: 0 0 0 2px #0f766e; }
+  .step-circle.done { background: #0f766e; color: #fff; }
+  .step-label { font-size: 11px; color: #a8a29e; }
+  .step-label.active { color: #0f4c44; font-weight: 600; }
+
+  .card { background: #fff; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e7e5e4; padding: 20px; }
+
+  label { font-size: 13px; color: #57534e; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  input {
+    width: 100%; border: 1px solid #e7e5e4; border-radius: 12px; padding: 11px 12px;
+    font-size: 15px; outline: none; margin-bottom: 4px; font-family: inherit;
+  }
+  input:focus { border-color: #0f766e; box-shadow: 0 0 0 3px #ccfbf1; }
+  input.error { border-color: #fca5a5; }
+  .field { margin-bottom: 14px; }
+  .err-text { color: #dc2626; font-size: 12px; margin: 2px 0 0; }
+
+  .btn {
+    width: 100%; border: none; border-radius: 12px; padding: 13px; font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .btn-primary { background: #0f4c44; color: #fff; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-outline { background: #fff; color: #57534e; border: 1px solid #d6d3d1; }
+  .btn-row { display: flex; gap: 8px; margin-top: 6px; }
+  .btn-row .btn { flex: 1; }
+
+  .clinic-card {
+    width: 100%; text-align: right; border: 1px solid #e7e5e4; border-radius: 14px;
+    padding: 12px; margin-bottom: 10px; background: #fff; cursor: pointer; display: block;
+    font-family: inherit;
+  }
+  .clinic-card.selected { border-color: #0f766e; background: #f0fdfa; }
+  .clinic-name { font-weight: 700; color: #292524; }
+  .clinic-addr { font-size: 12px; color: #78716c; margin-top: 2px; }
+  .clinic-time { font-size: 12px; color: #0f766e; margin-top: 4px; }
+
+  .dates-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px; }
+  .date-chip {
+    flex-shrink: 0; border: 1px solid #e7e5e4; border-radius: 12px; padding: 8px 12px;
+    text-align: center; cursor: pointer; background: #fff; font-family: inherit;
+  }
+  .date-chip.selected { background: #0f4c44; color: #fff; border-color: #0f4c44; }
+  .date-chip .d1 { font-size: 11px; }
+  .date-chip .d2 { font-size: 14px; font-weight: 700; }
+
+  .slots-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .slot-btn {
+    border: 1px solid #e7e5e4; border-radius: 10px; padding: 9px 4px; font-size: 13px;
+    background: #fff; cursor: pointer; font-family: inherit; color: #44403c;
+  }
+  .slot-btn.selected { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+  .slot-btn.taken { background: #f5f5f4; color: #d6d3d1; text-decoration: line-through; cursor: not-allowed; }
+
+  .summary { background: #fafaf9; border-radius: 12px; padding: 14px; font-size: 14px; }
+  .summary-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #e7e5e4; }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row .k { color: #78716c; }
+  .summary-row .v { font-weight: 600; }
+
+  .center { text-align: center; }
+  .success-icon { font-size: 46px; margin-bottom: 6px; }
+  .code-box { background: #ccfbf1; color: #0f4c44; border-radius: 12px; padding: 10px; font-weight: 700; margin: 14px 0; }
+  .muted { color: #a8a29e; font-size: 12px; text-align: center; margin-top: 16px; }
+  .alert { background: #fef2f2; color: #b91c1c; border-radius: 10px; padding: 10px; font-size: 13px; margin-top: 10px; }
+  .hint { color: #78716c; font-size: 13px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>حجز موعد</h1>
+    <p>د. محمد جلال الشيخ - استشاري المسالك البولية</p>
+    <svg class="pulse" viewBox="0 0 240 20">
+      <polyline points="0,10 60,10 75,2 90,18 105,10 240,10" fill="none" stroke="#0f766e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <div class="steps" id="stepsBar"></div>
+  <div class="card" id="card"></div>
+  <p class="muted">لو عندك أي استفسار تواصل معنا واتساب على العيادة</p>
+</div>
+
+<script>
+/* ---------------- بيانات العيادات ---------------- */
+var CLINICS = [
+  { id: "faisal", name: "عيادة فيصل", address: "منطقة فيصل، الجيزة",
+    days: [6,0,1,2,3], start: "18:30", end: "21:00" },
+  { id: "mohandessin", name: "عيادة المهندسين", address: "26 شارع جامعة الدول العربية، أعلى المترو، الدور الثالث",
+    days: [0,2,3], start: "16:00", end: "18:00" }
+];
+var DAY_NAMES = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+var MONTH_NAMES = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+var STEP_LABELS = ["البيانات","العيادة","الموعد"];
+
+function pad(n){ return String(n).padStart(2,"0"); }
+function dateKey(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+
+function generateSlots(start,end){
+  var slots=[]; var parts=start.split(":"); var h=+parts[0], m=+parts[1];
+  var eparts=end.split(":"); var eh=+eparts[0], em=+eparts[1];
+  while(h<eh || (h===eh && m<em)){
+    slots.push(pad(h)+":"+pad(m));
+    m+=10; if(m>=60){ m=0; h++; }
+  }
+  return slots;
+}
+function nextAvailableDates(clinic,count){
+  count = count||14;
+  var out=[]; var today=new Date(); today.setHours(0,0,0,0);
+  for(var i=0; out.length<count && i<60; i++){
+    var d=new Date(today); d.setDate(d.getDate()+i);
+    if(clinic.days.indexOf(d.getDay())!==-1) out.push(d);
+  }
+  return out;
+}
+
+/* ---------------- الاتصال بقاعدة بيانات مشتركة (Google Sheets) ---------------- */
+var API_URL = "https://script.google.com/macros/s/AKfycbxd45jsSd86C0sdkmAkMGqeH_7oVpJjz0cmCaH-Ruif1IdzVP0NDrN3cxUHb8XduNCE/exec";
+
+function getBookedTimes(clinicId, dateStr, callback){
+  var url = API_URL + "?action=getSlots&clinic=" + encodeURIComponent(clinicId) + "&date=" + encodeURIComponent(dateStr);
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    callback(data.times || []);
+  }).catch(function(){ callback([]); });
+}
+
+function bookSlot(payload, callback){
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  }).then(function(r){ return r.json(); }).then(function(data){
+    callback(data);
+  }).catch(function(){
+    callback({ success:false, error:"network" });
+  });
+}
+
+/* ---------------- حالة التطبيق ---------------- */
+var state = {
+  step: 0,
+  patient: { name:"", age:"", mobile:"", email:"" },
+  clinic: null,
+  date: null,
+  time: null,
+  errors: {}
+};
+
+function esc(s){
+  var d = document.createElement("div");
+  d.innerText = s;
+  return d.innerHTML;
+}
+
+function renderSteps(){
+  var bar = document.getElementById("stepsBar");
+  if(state.step >= 3){ bar.innerHTML = ""; return; }
+  var html = "";
+  for(var i=0;i<3;i++){
+    var circleClass = "step-circle";
+    if(i < state.step) circleClass += " done";
+    else if(i === state.step) circleClass += " active";
+    var labelClass = "step-label" + (i===state.step ? " active" : "");
+    html += '<div class="step-item"><div class="'+circleClass+'">'+(i+1)+'</div><div class="'+labelClass+'">'+STEP_LABELS[i]+'</div></div>';
+  }
+  bar.innerHTML = html;
+}
+
+function validatePatient(){
+  var e = {};
+  var p = state.patient;
+  if(!p.name.trim() || p.name.trim().length < 3) e.name = "من فضلك اكتب الاسم كامل";
+  var ageNum = Number(p.age);
+  if(!p.age || isNaN(ageNum) || ageNum < 1 || ageNum > 120) e.age = "من فضلك اكتب سن صحيح";
+  if(!/^01[0125][0-9]{8}$/.test(p.mobile.trim())) e.mobile = "رقم الموبايل غير صحيح، مثال: 01012345678";
+  if(p.email.trim() && !/^\S+@\S+\.\S+$/.test(p.email.trim())) e.email = "البريد الإلكتروني غير صحيح";
+  state.errors = e;
+  return Object.keys(e).length === 0;
+}
+
+function goStep(n){ state.step = n; render(); }
+
+/* ---------------- عرض كل خطوة ---------------- */
+function renderStep0(){
+  var p = state.patient, e = state.errors;
+  var card = document.getElementById("card");
+  card.innerHTML =
+    '<div class="field"><label>الاسم بالكامل</label>' +
+      '<input id="f_name" class="'+(e.name?'error':'')+'" placeholder="مثال: أحمد محمد علي" value="'+esc(p.name)+'"/>' +
+      (e.name?'<p class="err-text">'+e.name+'</p>':'') +
+    '</div>' +
+    '<div class="field"><label>السن</label>' +
+      '<input id="f_age" class="'+(e.age?'error':'')+'" placeholder="مثال: 45" inputmode="numeric" value="'+esc(p.age)+'"/>' +
+      (e.age?'<p class="err-text">'+e.age+'</p>':'') +
+    '</div>' +
+    '<div class="field"><label>رقم الموبايل</label>' +
+      '<input id="f_mobile" class="'+(e.mobile?'error':'')+'" placeholder="01012345678" inputmode="tel" value="'+esc(p.mobile)+'"/>' +
+      (e.mobile?'<p class="err-text">'+e.mobile+'</p>':'') +
+    '</div>' +
+    '<div class="field"><label>البريد الإلكتروني (اختياري)</label>' +
+      '<input id="f_email" class="'+(e.email?'error':'')+'" placeholder="example@email.com" value="'+esc(p.email)+'"/>' +
+      (e.email?'<p class="err-text">'+e.email+'</p>':'') +
+    '</div>' +
+    '<button class="btn btn-primary" id="nextBtn">التالي</button>';
+
+  document.getElementById("f_name").oninput = function(ev){ state.patient.name = ev.target.value; };
+  document.getElementById("f_age").oninput = function(ev){ state.patient.age = ev.target.value.replace(/[^0-9]/g,""); ev.target.value = state.patient.age; };
+  document.getElementById("f_mobile").oninput = function(ev){ state.patient.mobile = ev.target.value.replace(/[^0-9]/g,""); ev.target.value = state.patient.mobile; };
+  document.getElementById("f_email").oninput = function(ev){ state.patient.email = ev.target.value; };
+  document.getElementById("nextBtn").onclick = function(){
+    if(validatePatient()) goStep(1); else render();
+  };
+}
+
+function renderStep1(){
+  var card = document.getElementById("card");
+  var html = '<p class="hint">اختر مكان الكشف</p>';
+  CLINICS.forEach(function(c){
+    var selected = state.clinic && state.clinic.id === c.id;
+    html += '<button class="clinic-card'+(selected?' selected':'')+'" data-id="'+c.id+'">' +
+      '<div class="clinic-name">📍 '+c.name+'</div>' +
+      '<div class="clinic-addr">'+c.address+'</div>' +
+      '<div class="clinic-time">'+c.days.map(function(d){return DAY_NAMES[d];}).join(' - ')+' | '+c.start+' - '+c.end+'</div>' +
+    '</button>';
+  });
+  html += '<div class="btn-row">' +
+    '<button class="btn btn-outline" id="backBtn">رجوع</button>' +
+    '<button class="btn btn-primary" id="nextBtn" '+(state.clinic?'':'disabled')+'>التالي</button>' +
+  '</div>';
+  card.innerHTML = html;
+
+  Array.prototype.forEach.call(card.querySelectorAll(".clinic-card"), function(btn){
+    btn.onclick = function(){
+      var c = CLINICS.filter(function(x){ return x.id === btn.getAttribute("data-id"); })[0];
+      state.clinic = c; state.date = null; state.time = null;
+      render();
+    };
+  });
+  document.getElementById("backBtn").onclick = function(){ goStep(0); };
+  document.getElementById("nextBtn").onclick = function(){ if(state.clinic) goStep(2); };
+}
+
+function renderStep2(){
+  var card = document.getElementById("card");
+  var dates = nextAvailableDates(state.clinic);
+  var html = '<p class="hint">اختر اليوم</p><div class="dates-row" id="datesRow">';
+  dates.forEach(function(d){
+    var sel = state.date && dateKey(d) === dateKey(state.date);
+    html += '<div class="date-chip'+(sel?' selected':'')+'" data-key="'+dateKey(d)+'">' +
+      '<div class="d1">'+DAY_NAMES[d.getDay()]+'</div>' +
+      '<div class="d2">'+d.getDate()+' '+MONTH_NAMES[d.getMonth()]+'</div>' +
+    '</div>';
+  });
+  html += '</div>';
+
+  if(state.date){
+    html += '<p class="hint">⏰ اختر الميعاد (كل موعد 10 دقايق)</p>';
+    html += '<div id="slotsArea"><p class="muted">جاري تحميل المواعيد المتاحة...</p></div>';
+  }
+
+  html += '<div class="btn-row">' +
+    '<button class="btn btn-outline" id="backBtn">رجوع</button>' +
+    '<button class="btn btn-primary" id="nextBtn" '+(state.time?'':'disabled')+'>التالي</button>' +
+  '</div>';
+  card.innerHTML = html;
+
+  Array.prototype.forEach.call(card.querySelectorAll(".date-chip"), function(chip){
+    chip.onclick = function(){
+      var k = chip.getAttribute("data-key");
+      var dates2 = nextAvailableDates(state.clinic);
+      state.date = dates2.filter(function(d){ return dateKey(d) === k; })[0];
+      state.time = null;
+      render();
+    };
+  });
+  document.getElementById("backBtn").onclick = function(){ goStep(1); };
+  document.getElementById("nextBtn").onclick = function(){ if(state.time) goStep(2.5); };
+
+  if(state.date){
+    var thisClinicId = state.clinic.id, thisDateStr = dateKey(state.date);
+    getBookedTimes(thisClinicId, thisDateStr, function(taken){
+      if(!state.date || state.clinic.id !== thisClinicId || dateKey(state.date) !== thisDateStr) return;
+      var allSlots = generateSlots(state.clinic.start, state.clinic.end);
+      var area = document.getElementById("slotsArea");
+      if(!area) return;
+      var html2 = '<div class="slots-grid">';
+      allSlots.forEach(function(t){
+        var isTaken = taken.indexOf(t) !== -1;
+        var isSel = state.time === t;
+        var cls = "slot-btn" + (isTaken?" taken":"") + (isSel?" selected":"");
+        html2 += '<button class="'+cls+'" data-time="'+t+'" '+(isTaken?'disabled':'')+'>'+t+'</button>';
+      });
+      html2 += '</div>';
+      if(allSlots.every(function(t){ return taken.indexOf(t)!==-1; })){
+        html2 += '<p class="muted">كل المواعيد محجوزة في هذا اليوم، من فضلك اختر يوم تاني</p>';
+      }
+      area.innerHTML = html2;
+      Array.prototype.forEach.call(area.querySelectorAll(".slot-btn:not([disabled])"), function(btn){
+        btn.onclick = function(){ state.time = btn.getAttribute("data-time"); render(); };
+      });
+    });
+  }
+}
+
+function renderStep2_5(){
+  var card = document.getElementById("card");
+  var html = '<p class="hint">راجع بيانات الحجز قبل التأكيد</p>' + summaryHtml();
+  if(state.submitError){
+    html += '<div class="alert">⚠️ '+state.submitError+'</div>';
+  }
+  html += '<div class="btn-row">' +
+    '<button class="btn btn-outline" id="editBtn">تعديل</button>' +
+    '<button class="btn btn-primary" id="confirmBtn">تأكيد الحجز</button>' +
+  '</div>';
+  card.innerHTML = html;
+  document.getElementById("editBtn").onclick = function(){ goStep(2); };
+  document.getElementById("confirmBtn").onclick = function(){
+    var btn = document.getElementById("confirmBtn");
+    btn.disabled = true;
+    btn.innerText = "جاري التأكيد...";
+    bookSlot({
+      clinic: state.clinic.id,
+      date: dateKey(state.date),
+      time: state.time,
+      name: state.patient.name.trim(),
+      age: state.patient.age.trim(),
+      mobile: state.patient.mobile.trim(),
+      email: state.patient.email.trim()
+    }, function(result){
+      if(!result.success){
+        state.submitError = "للأسف هذا الموعد تم حجزه للتو، من فضلك اختر موعد آخر";
+        state.time = null;
+        state.step = 2;
+        render();
+        return;
+      }
+      state.bookingCode = result.code;
+      state.submitError = null;
+      state.step = 3;
+      render();
+    });
+  };
+}
+
+/* ---------------- واتساب العيادة ---------------- */
+var CLINIC_WHATSAPP = "201020857272";
+
+function buildWhatsAppMessage(){
+  var p = state.patient, c = state.clinic, d = state.date;
+  var lines = [
+    "حجز موعد جديد ✅",
+    "الاسم: " + p.name,
+    "السن: " + p.age,
+    "الموبايل: " + p.mobile
+  ];
+  if(p.email.trim()) lines.push("البريد الإلكتروني: " + p.email);
+  lines.push("العيادة: " + c.name);
+  lines.push("العنوان: " + c.address);
+  lines.push("اليوم: " + DAY_NAMES[d.getDay()] + " " + d.getDate() + " " + MONTH_NAMES[d.getMonth()]);
+  lines.push("الميعاد: " + state.time);
+  lines.push("كود الحجز: " + state.bookingCode);
+  return lines.join("\n");
+}
+
+function sendWhatsAppConfirmation(){
+  var text = encodeURIComponent(buildWhatsAppMessage());
+  var url = "https://wa.me/" + CLINIC_WHATSAPP + "?text=" + text;
+  window.open(url, "_blank");
+}
+
+function renderStep3(){
+  var card = document.getElementById("card");
+  card.innerHTML =
+    '<div class="center">' +
+      '<div class="success-icon">✅</div>' +
+      '<h2 style="color:#0f4c44;margin:6px 0 2px;">تم حجز الموعد بنجاح</h2>' +
+      '<p class="hint">خد لقطة شاشة لهذه الصفحة أو احتفظ بكود الحجز</p>' +
+      '<div class="code-box">كود الحجز: '+state.bookingCode+'</div>' +
+    '</div>' +
+    summaryHtml() +
+    '<button class="btn btn-primary" id="whatsappBtn" style="background:#25D366;margin-top:10px;">إرسال تأكيد الحجز على واتساب</button>' +
+    '<button class="btn btn-outline" id="resetBtn" style="margin-top:10px;">حجز موعد جديد</button>';
+  document.getElementById("whatsappBtn").onclick = sendWhatsAppConfirmation;
+  document.getElementById("resetBtn").onclick = function(){
+    state = { step:0, patient:{name:"",age:"",mobile:"",email:""}, clinic:null, date:null, time:null, errors:{} };
+    render();
+  };
+  sendWhatsAppConfirmation();
+}
+
+function summaryHtml(){
+  var p = state.patient, c = state.clinic, d = state.date;
+  var rows = [
+    ["الاسم", p.name], ["السن", p.age], ["الموبايل", p.mobile]
+  ];
+  if(p.email.trim()) rows.push(["البريد الإلكتروني", p.email]);
+  rows.push(["العيادة", c.name]);
+  rows.push(["العنوان", c.address]);
+  rows.push(["اليوم", DAY_NAMES[d.getDay()]+" "+d.getDate()+" "+MONTH_NAMES[d.getMonth()]]);
+  rows.push(["الميعاد", state.time]);
+  var html = '<div class="summary">';
+  rows.forEach(function(r){
+    html += '<div class="summary-row"><span class="k">'+r[0]+'</span><span class="v">'+esc(String(r[1]))+'</span></div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function render(){
+  renderSteps();
+  if(state.step === 0) renderStep0();
+  else if(state.step === 1) renderStep1();
+  else if(state.step === 2) renderStep2();
+  else if(state.step === 2.5) renderStep2_5();
+  else if(state.step === 3) renderStep3();
+}
+
+render();
+</script>
+</body>
+</html>
